@@ -8,20 +8,23 @@ import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.provider.MediaStore
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_music_player.*
+import java.util.concurrent.TimeUnit
 
 
-class MusicPlayerActivity : AppCompatActivity() {
-private var mediaPlayer : MediaPlayer?= null
+class MusicPlayerActivity : AppCompatActivity(), ItemClicked {
+    private var mediaPlayer: MediaPlayer? = null
     private lateinit var musicList: MutableList<Music>
     private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var adapter: MusicAdapter
-    private var currPosition: Int=0
-    private  var state: Boolean=false
+    private var currPosition: Int = 0
+    private var state: Boolean = false
     // false - stop
     // true -play
 
@@ -35,28 +38,98 @@ private var mediaPlayer : MediaPlayer?= null
         musicList = mutableListOf()
         if (Build.VERSION.SDK_INT >= 23)
             checkPermission()
-        fab_play.setOnClickListener{
+        fab_play.setOnClickListener {
             play(currPosition)
         }
+        fab_next.setOnClickListener {
+            mediaPlayer?.stop()
+            state=false
+            if (currPosition<musicList.size-1){
+            currPosition += 1
+            play(currPosition)}
+            else if (currPosition>=musicList.size-1){
+                mediaPlayer?.stop()
+                state=false
+                play(currPosition)}
+        }
+        fab_prev.setOnClickListener {
+            mediaPlayer?.stop()
+            state=false
+            if (currPosition>0){
+            currPosition -= 1
+            play(currPosition)}
+            else if (currPosition==0){
+                mediaPlayer?.stop()
+                state=false
+                play(currPosition)}
+
+        }
+        seek_Bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser){
+                    mediaPlayer?.seekTo(progress*1000)
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+
+            }
+
+        })
+
     }
-    fun play(currPosition : Int){
-        if (!state){
+
+    fun play(currPosition: Int) {
+        if (!state) {
             fab_play.setImageDrawable(resources.getDrawable(R.drawable.ic_stop))
-            state=true
-            mediaPlayer=MediaPlayer().apply {
+            state = true
+            mediaPlayer = MediaPlayer().apply {
                 setAudioStreamType(AudioManager.STREAM_MUSIC)
                 setDataSource(this@MusicPlayerActivity, Uri.parse(musicList[currPosition].songUri))
                 prepare()
                 start()
             }
-        }
-        else{
-            state=false
+            val mHandler = Handler()
+            this@MusicPlayerActivity.runOnUiThread(object : Runnable {
+                override fun run() {
+                    val playerPosition = mediaPlayer?.currentPosition!! / 1000
+                    val totalDuration = mediaPlayer?.duration!! / 1000
+
+                    seek_Bar.max = totalDuration
+                    seek_Bar.progress = playerPosition
+                    past_text_view.text = timerFormat(playerPosition.toLong())
+                    remain_text_view.text=timerFormat((totalDuration-playerPosition).toLong())
+                    mHandler.postDelayed(this, 1000)
+                }
+
+            })
+        } else {
+            state = false
             mediaPlayer?.stop()
             fab_play.setImageDrawable(resources.getDrawable(R.drawable.ic_play_arrow))
 
         }
 
+    }
+
+    //00:30
+    //01:15
+    fun timerFormat(time: Long): String {
+        val result = String.format(
+            "%02d:%02d",
+            TimeUnit.SECONDS.toMinutes(time),
+            TimeUnit.SECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(
+                TimeUnit.SECONDS.toMinutes(time)
+            )
+        )
+        var convert = ""
+        for (i in 0 until result.length)
+            convert += result[i]
+        return convert
     }
 
     private fun getSongs() {
@@ -77,10 +150,10 @@ private var mediaPlayer : MediaPlayer?= null
             musicList.add(Music(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
         }
         cursor.close()
-        linearLayoutManager= LinearLayoutManager(this)
-        adapter= MusicAdapter(musicList)
-        recycler_view.layoutManager=linearLayoutManager
-        recycler_view.adapter=adapter
+        linearLayoutManager = LinearLayoutManager(this)
+        adapter = MusicAdapter(musicList, this)
+        recycler_view.layoutManager = linearLayoutManager
+        recycler_view.adapter = adapter
     }
 
     private fun checkPermission() {
@@ -128,5 +201,13 @@ private var mediaPlayer : MediaPlayer?= null
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
 
+    }
+
+    override fun itemClicked(position: Int) {
+
+        mediaPlayer?.stop()
+        state = false
+        this.currPosition = position
+        play(position)
     }
 }

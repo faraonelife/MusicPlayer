@@ -5,8 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import android.text.method.ScrollingMovementMethod
 
-class MusicAdapter(var musicList:MutableList<Music>) :RecyclerView.Adapter<MusicAdapter.MusicViewHolder>() {
+
+
+
+class MusicAdapter(private var musicList:MutableList<Music>, private var itemClicked: ItemClicked) :RecyclerView.Adapter<MusicAdapter.MusicViewHolder>() {
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MusicViewHolder {
@@ -31,7 +35,7 @@ class MusicAdapter(var musicList:MutableList<Music>) :RecyclerView.Adapter<Music
 
 
 
-    class MusicViewHolder(v:View): RecyclerView.ViewHolder(v),View.OnClickListener{
+    inner class MusicViewHolder(v:View): RecyclerView.ViewHolder(v),View.OnClickListener{
         private var view: View=v
 
         private lateinit var music:Music
@@ -41,6 +45,8 @@ class MusicAdapter(var musicList:MutableList<Music>) :RecyclerView.Adapter<Music
             artistName=view.findViewById(R.id.artist_text_view)
             songName=view.findViewById(R.id.song_text_view)
             view.setOnClickListener(this)
+            artistName.setMovementMethod(ScrollingMovementMethod())
+            songName.setMovementMethod(ScrollingMovementMethod())
         }
         fun bindMusic(music:Music){
             this.music=music
@@ -48,6 +54,7 @@ class MusicAdapter(var musicList:MutableList<Music>) :RecyclerView.Adapter<Music
             songName.text=music.songName
         }
         override fun onClick(p0: View?) {
+            itemClicked.itemClicked(adapterPosition)
 
         }
 
