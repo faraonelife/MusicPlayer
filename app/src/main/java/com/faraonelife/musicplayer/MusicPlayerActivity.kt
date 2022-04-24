@@ -15,7 +15,10 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_music_player.*
+import kotlinx.android.synthetic.main.music_items.*
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 
 class MusicPlayerActivity : AppCompatActivity(), ItemClicked {
@@ -25,6 +28,8 @@ class MusicPlayerActivity : AppCompatActivity(), ItemClicked {
     private lateinit var adapter: MusicAdapter
     private var currPosition: Int = 0
     private var state: Boolean = false
+    private var shuffleBool: Boolean = false
+    private var repeatBool: Boolean = false
     // false - stop
     // true -play
 
@@ -41,6 +46,9 @@ class MusicPlayerActivity : AppCompatActivity(), ItemClicked {
         fab_play.setOnClickListener {
             play(currPosition)
         }
+
+
+
         fab_next.setOnClickListener {
             mediaPlayer?.stop()
             state=false
@@ -81,6 +89,12 @@ class MusicPlayerActivity : AppCompatActivity(), ItemClicked {
 
         })
 
+    }
+
+    private fun getRandom(i: Int): Int {
+        lateinit var r :Random
+
+return r.nextInt(i+1)
     }
 
     fun play(currPosition: Int) {

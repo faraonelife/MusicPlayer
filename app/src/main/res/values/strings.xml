@@ -4,4 +4,6 @@
     <string name="remain_string">3:32</string>
     <string name="song_string">song name</string>
     <string name="artist_string">artist name</string>
+    <string name="shuffle">shuffle</string>
+    <string name="repeat">repeat</string>
 </resources>
